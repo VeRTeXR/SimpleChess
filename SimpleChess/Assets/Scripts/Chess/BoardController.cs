@@ -1,3 +1,4 @@
+using Lean.Pool;
 using UnityEngine;
 using Utilities;
 
@@ -5,21 +6,20 @@ namespace Chess
 {
     public class BoardController : MonoBehaviour
     {
-        [SerializeField] private  Material defaultMaterial;
+        [SerializeField] private Material defaultMaterial;
         [SerializeField] private Material selectedMaterial;
 
         
         public GameObject AddPiece(GameObject piece, int col, int row)
         {
-            // TODO :: Update to LeanPool function here!
-            Vector2Int gridPoint = Geometry.GridPoint(col, row);
-            var newPiece = Instantiate(piece, Geometry.PointFromGrid(gridPoint), Quaternion.identity, gameObject.transform);
+            var gridPoint = Geometry.GridPoint(col, row);
+            var newPiece = LeanPool.Spawn(piece, Geometry.PointFromGrid(gridPoint), Quaternion.identity, gameObject.transform);
             return newPiece;
         }
 
         public void RemovePiece(GameObject piece)
         {
-            Destroy(piece);
+            LeanPool.Despawn(piece);
         }
 
         public void MovePiece(GameObject piece, Vector2Int gridPoint)

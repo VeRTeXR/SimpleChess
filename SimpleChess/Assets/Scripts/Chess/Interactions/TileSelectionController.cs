@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using Lean.Pool;
+using TMPro;
 using UnityEngine;
 using Utilities;
 
@@ -19,7 +20,7 @@ namespace Chess.Interactions
             
             var gridPoint = Geometry.GridPoint(0, 0);
             var point = Geometry.PointFromGrid(gridPoint);
-            _tileHighlightInstance = Instantiate(tileHighlightPrefab, point, Quaternion.identity, gameObject.transform);
+            _tileHighlightInstance = LeanPool.Spawn(tileHighlightPrefab, point, Quaternion.identity, gameObject.transform);
             _tileHighlightInstance.SetActive(false);
         }
 

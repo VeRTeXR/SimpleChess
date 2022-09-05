@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Lean.Pool;
 using UnityEngine;
 using Utilities;
 
@@ -15,20 +16,21 @@ namespace Chess.Interactions
         private List<Vector2Int> _moveLocations;
         private List<GameObject> _locationHighlights;
         private TileSelectionController _tileSelectionController;
+        private Camera _mainCamera;
 
         private void Start ()
         {
+            _mainCamera = Camera.main;
             enabled = false;
             _tileSelectionController = GetComponent<TileSelectionController>();
-            //TODO :: get from pool
-            _tileHighlight = Instantiate(tileHighlightPrefab, Geometry.PointFromGrid(new Vector2Int(0, 0)),
+            _tileHighlight = LeanPool.Spawn(tileHighlightPrefab, Geometry.PointFromGrid(new Vector2Int(0, 0)),
                 Quaternion.identity, gameObject.transform);
             _tileHighlight.SetActive(false);
         }
 
         private void Update ()
         {
-            var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            var ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
 
             if (Physics.Raycast(ray, out var hit))
             {
@@ -62,11 +64,7 @@ namespace Chess.Interactions
         {
             enabled = false;
 
-            foreach (var highlight in _locationHighlights)
-            {
-                //TODO:: return to pool 
-                Destroy(highlight);
-            }
+            foreach (var highlight in _locationHighlights) LeanPool.Despawn(highlight);
 
             GameManager.Instance.DeselectPiece(_movingPiece);
             _tileSelectionController.EnterState();
@@ -86,12 +84,11 @@ namespace Chess.Interactions
             foreach (var loc in _moveLocations)
             {
                 GameObject highlight;
-                //TODO :: Update to pool object
                 if (GameManager.Instance.GetPieceAtGrid(loc))
-                    highlight = Instantiate(attackLocationPrefab, Geometry.PointFromGrid(loc), Quaternion.identity,
+                    highlight = LeanPool.Spawn(attackLocationPrefab, Geometry.PointFromGrid(loc), Quaternion.identity,
                         gameObject.transform);
                 else
-                    highlight = Instantiate(moveLocationPrefab, Geometry.PointFromGrid(loc), Quaternion.identity,
+                    highlight = LeanPool.Spawn(moveLocationPrefab, Geometry.PointFromGrid(loc), Quaternion.identity,
                         gameObject.transform);
                 _locationHighlights.Add(highlight);
             }
@@ -105,11 +102,8 @@ namespace Chess.Interactions
             _movingPiece = null;
             GameManager.Instance.NextPlayer();
             _tileSelectionController.EnterState();
-            foreach (var highlight in _locationHighlights)
-            { 
-                //TODO :: return object to pool 
-                Destroy(highlight);
-            }
+            
+            foreach (var highlight in _locationHighlights) LeanPool.Despawn(highlight);
         }
 
         public void GameOver()

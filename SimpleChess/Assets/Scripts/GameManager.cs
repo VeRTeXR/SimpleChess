@@ -3,9 +3,11 @@ using Chess;
 using Chess.Interactions;
 using Chess.Pieces;
 using Data;
+using echo17.Signaler.Core;
+using Lean.Pool;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour, IBroadcaster
 {
     public static GameManager Instance;
 
@@ -109,7 +111,7 @@ public class GameManager : MonoBehaviour
         var gridPoint = GetPieceCurrentGridCoordinate(pieceObject);
         var locations = piece.MoveLocations(gridPoint);
         locations.RemoveAll(gp => gp.x < 0 || gp.x > 7 || gp.y < 0 || gp.y > 7);
-        locations.RemoveAll(IsFriendlyPieceAt);
+        locations.RemoveAll(gp => IsFriendlyPieceAt(gp));
 
         return locations;
     }
@@ -200,7 +202,7 @@ public class GameManager : MonoBehaviour
             
             Debug.Log(CurrentPlayer.Name
                       + " wins!");
-
+            Signaler.Instance.Broadcast(this, new GameOver {WonPlayerData = CurrentPlayer});
             _moveActionController.GameOver();
             _tileSelectionController.GameOver();
             // Destroy(board.GetComponent<TileSelector>());
@@ -209,7 +211,6 @@ public class GameManager : MonoBehaviour
         CurrentPlayer.CapturedPieces.Add(pieceToCapture);
         _pieces[gridPoint.x, gridPoint.y] = null;
 
-        //TODO:: return to pool
-        Destroy(pieceToCapture);
+        LeanPool.Despawn(pieceToCapture);
     }
 }
