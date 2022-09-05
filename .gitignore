@@ -9,7 +9,7 @@ SimpleChess/[Bb]uild/
 SimpleChess/[Bb]uilds/
 SimpleChess/[Ll]ogs/
 SimpleChess/[Mm]emoryCaptures/
-
+SimpleChess/.idea/
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta
 

@@ -94,6 +94,7 @@ GameObject:
   - component: {fileID: 8793432313212600438}
   - component: {fileID: 8546846010289178085}
   - component: {fileID: 5783057578332089932}
+  - component: {fileID: 3007114581000156977}
   m_Layer: 0
   m_Name: ChessBoard
   m_TagString: Untagged
@@ -109,7 +110,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6206475469941339976}
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 3, y: -0.16, z: 3}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -167,6 +168,20 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &3007114581000156977
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6206475469941339976}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 1284130878809804175, guid: 7301c898624b75f4cb3d287be215412f, type: 3}
 --- !u!1 &8113122114373634318
 GameObject:
   m_ObjectHideFlags: 0
@@ -241,6 +256,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95e4420e8503ab44d939d49b584bc8cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveLocationPrefab: {fileID: 0}
+  moveLocationPrefab: {fileID: 4657855985816373623, guid: 93214c9ae86f2e944a254a306a7c5d19, type: 3}
   tileHighlightPrefab: {fileID: 4214001306167953390, guid: f07977f67fcbecd44878670ee76cbea5, type: 3}
-  attackLocationPrefab: {fileID: 0}
+  attackLocationPrefab: {fileID: 3433429413122919436, guid: 9a523224c7e6f2a4f9c15fb0e7660ed6, type: 3}
