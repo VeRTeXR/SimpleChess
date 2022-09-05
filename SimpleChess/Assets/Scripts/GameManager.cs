@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Chess;
+using Chess.Interactions;
+using Chess.Pieces;
 using Data;
 using UnityEngine;
 
@@ -30,8 +32,11 @@ public class GameManager : MonoBehaviour
     private Player _white;
     private Player _black;
     public Player CurrentPlayer;
-    public Player OtherPlayer;
-
+    private Player _otherPlayer;
+    private TileSelectionController _tileSelectionController;
+    private MoveActionController _moveActionController;
+    
+    
     private void Awake()
     {
         if(Instance != null) 
@@ -43,9 +48,10 @@ public class GameManager : MonoBehaviour
     {
         _white = new Player("white", true);
         _black = new Player("black", false);
-
+        _tileSelectionController = boardController.GetComponent<TileSelectionController>();
+        _moveActionController = boardController.GetComponent<MoveActionController>();
         CurrentPlayer = _white;
-        OtherPlayer = _black;
+        _otherPlayer = _black;
 
         InitializeGame();
     }
@@ -111,7 +117,7 @@ public class GameManager : MonoBehaviour
     public void Move(GameObject piece, Vector2Int gridPoint)
     {
         var pieceComponent = piece.GetComponent<Piece>();
-        if (pieceComponent.type == PieceType.Pawn && !HasPawnMoved(piece))
+        if (pieceComponent is Pawn && !HasPawnMoved(piece))
         {
             _movedPawns.Add(piece);
         }
@@ -147,7 +153,7 @@ public class GameManager : MonoBehaviour
         return CurrentPlayer.Pieces.Contains(piece);
     }
 
-    public GameObject PieceAtGrid(Vector2Int gridPoint)
+    public GameObject GetPieceAtGrid(Vector2Int gridPoint)
     {
         if (gridPoint.x > 7 || gridPoint.y > 7 || gridPoint.x < 0 || gridPoint.y < 0)
         {
@@ -168,12 +174,12 @@ public class GameManager : MonoBehaviour
 
     public bool IsFriendlyPieceAt(Vector2Int gridPoint)
     {
-        var piece = PieceAtGrid(gridPoint);
+        var piece = GetPieceAtGrid(gridPoint);
 
         if (piece == null)
             return false;
 
-        if (OtherPlayer.Pieces.Contains(piece))
+        if (_otherPlayer.Pieces.Contains(piece))
             return false;
 
         return true;
@@ -182,7 +188,28 @@ public class GameManager : MonoBehaviour
     public void NextPlayer()
     {
         var tempPlayer = CurrentPlayer;
-        CurrentPlayer = OtherPlayer;
-        OtherPlayer = tempPlayer;
+        CurrentPlayer = _otherPlayer;
+        _otherPlayer = tempPlayer;
+    }
+
+    public void CapturePieceAt(Vector2Int gridPoint)
+    {
+        var pieceToCapture = GetPieceAtGrid(gridPoint);
+        if (pieceToCapture.GetComponent<Piece>() is King)
+        {
+            
+            Debug.Log(CurrentPlayer.Name
+                      + " wins!");
+
+            _moveActionController.GameOver();
+            _tileSelectionController.GameOver();
+            // Destroy(board.GetComponent<TileSelector>());
+            // Destroy(board.GetComponent<MoveSelector>());
+        }
+        CurrentPlayer.CapturedPieces.Add(pieceToCapture);
+        _pieces[gridPoint.x, gridPoint.y] = null;
+
+        //TODO:: return to pool
+        Destroy(pieceToCapture);
     }
 }

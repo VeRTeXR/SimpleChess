@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using Data;
 using UnityEngine;
 
-namespace Chess
+namespace Chess.Pieces
 {
     public abstract class Piece : MonoBehaviour
     {
-        public PieceType type;
+        protected PieceType Type;
 
         protected Vector2Int[] RookDirections = {new Vector2Int(0,1), new Vector2Int(1, 0),
             new Vector2Int(0, -1), new Vector2Int(-1, 0)};
