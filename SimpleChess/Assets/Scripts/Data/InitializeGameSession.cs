@@ -1,4 +1,4 @@
-﻿namespace UI
+﻿namespace Data
 {
     public struct InitializeGameSession
     {

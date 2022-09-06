@@ -1,4 +1,4 @@
-﻿namespace AIPlayer
+﻿namespace Data
 {
     public struct FinishEnemyTurn
     {

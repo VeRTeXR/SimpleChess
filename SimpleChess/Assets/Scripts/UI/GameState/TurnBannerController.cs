@@ -1,5 +1,4 @@
-using System;
-using AIPlayer;
+using Data;
 using echo17.Signaler.Core;
 using TMPro;
 using UnityEngine;
@@ -15,7 +14,6 @@ namespace UI.GameState
         [SerializeField] private TextMeshProUGUI turnText;
         [Header("Animations")]
         [SerializeField] private LeanTweenType bannerAnimationEase = LeanTweenType.easeInOutCubic;
-
         [SerializeField] private float bannerMoveInTime = 0.35f;
         [SerializeField] private float bannerHoldTime = 0.5f;
         [SerializeField] private float bannerMoveOutTime = 0.35f;
@@ -29,9 +27,9 @@ namespace UI.GameState
         private bool OnPlayerTurnStarted(StartPlayerTurn signal)
         {
             LeanTween.cancel(gameObject);
-            
-            turnText.text = "Player Turn";
             banner.transform.localPosition = new Vector3(0,-Screen.height,0); 
+
+            turnText.text = "Player Turn";
             layout.SetActive(true);
             AnimateBanner();
             return true;
@@ -40,9 +38,9 @@ namespace UI.GameState
         private bool OnEnemyTurnStarted(StartEnemyTurn signal)
         {
             LeanTween.cancel(gameObject);
+            banner.transform.localPosition = new Vector3(0,-Screen.height,0); 
 
             turnText.text = "Enemy Turn";
-            banner.transform.localPosition = new Vector3(0,-Screen.height,0); 
             layout.SetActive(true);
             AnimateBanner();
             return true;

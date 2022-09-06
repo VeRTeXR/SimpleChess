@@ -24,8 +24,11 @@ namespace Chess
      
         public void MovePiece(GameObject piece, Vector2Int gridPoint)
         {
-            Debug.LogError("Move : "+piece.transform.name +  " : " +gridPoint.x + " , " + gridPoint.y);
-            piece.transform.position = Geometry.PointFromGrid(gridPoint);
+            LeanTween.move(piece, Geometry.PointFromGrid(gridPoint), 0.2f).setEase(LeanTweenType.easeInOutCubic).setOnComplete(
+                () =>
+                {
+                    piece.transform.position = Geometry.PointFromGrid(gridPoint);
+                });           
         }
 
         public void SelectPiece(GameObject piece)

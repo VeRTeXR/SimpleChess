@@ -1,4 +1,4 @@
-﻿namespace UI.GameState
+﻿namespace Data
 {
     public struct StartPlayerTurn
     {

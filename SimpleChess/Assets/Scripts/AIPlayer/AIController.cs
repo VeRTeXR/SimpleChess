@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Chess.Pieces;
+using Data;
 using echo17.Signaler.Core;
 using UI.Summary;
 using UnityEngine;
@@ -45,19 +46,31 @@ namespace AIPlayer
             _enemyActivePiece = allActivePieces.Where(piece => !piece.IsPlayerPiece).ToList();
             
             //TODO:: Use minimax and alpha beta pruning for decision making 
-            RandomlySelectPiece();
+            
+            while (_movableCoordinateList.Count <= 0 )
+            {
+                var decisionIndex = 0;
+                decisionIndex = RandomlySelectPiece(decisionIndex);
+                _movableCoordinateList = GameManager.Instance.MovesForPiece(_selectedPiece.gameObject);
+                
+                if (decisionIndex < 30) continue;
+                Signaler.Instance.Broadcast(this, new GameOver{WonPlayerData = GameManager.Instance.OtherPlayer});
+                break;
+            }
+            
             GameManager.Instance.SelectPiece(_selectedPiece.gameObject);
-            _movableCoordinateList = GameManager.Instance.MovesForPiece(_selectedPiece.gameObject);
             StartAiPieceSelectionSequence(_selectedPiece);
             
             
             return true;
         }
 
-        private void RandomlySelectPiece()
+        private int RandomlySelectPiece(int decisionIndex)
         {
             var randRng = Random.Range(0, _enemyActivePiece.Count);
             _selectedPiece = _enemyActivePiece[randRng];
+            decisionIndex++;
+            return decisionIndex;
         }
 
         private void StartAiPieceSelectionSequence(Piece piece)

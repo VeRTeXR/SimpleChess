@@ -1,22 +1,19 @@
 using System.Collections.Generic;
-using AIPlayer;
 using Chess;
 using Chess.Interactions;
 using Chess.Pieces;
 using Data;
 using echo17.Signaler.Core;
 using Lean.Pool;
-using UI;
-using UI.GameState;
-using UI.Summary;
 using UnityEngine;
-using UnityEngine.Timeline;
 
 public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 {
     public static GameManager Instance;
 
     public BoardController boardController;
+    public Player CurrentPlayer { get; private set; }
+    public Player OtherPlayer { get; private set; }
 
     [Header("Pieces References")] 
     [SerializeField] private GameObject whiteKing;
@@ -38,12 +35,10 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
     private Player _white;
     private Player _black;
-    public Player CurrentPlayer;
-    private Player _otherPlayer;
     private TileSelectionController _tileSelectionController;
     private MoveActionController _moveActionController;
     private List<Piece> _activePieces = new List<Piece>();
-
+    
 
     private void Awake()
     {
@@ -59,46 +54,41 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
     private bool OnRestartGameSession(RestartSession signal)
     {
-        _pieces = new GameObject[8, 8];
-        _movedPawns.Clear();
-        _activePieces.Clear();
-        boardController.Clear();
-        if (_tileSelectionController == null)
-            _tileSelectionController = boardController.GetComponent<TileSelectionController>();
-        if (_moveActionController == null)
-            _moveActionController = boardController.GetComponent<MoveActionController>();
-
-        _white = new Player("white", true);
-        _black = new Player("black", false);
-        CurrentPlayer = _white;
-        _otherPlayer = _black;
-
+        ClearGameStateData();
+        PopulateBoardDependencies();
         InitializeGame();
-
         Signaler.Instance.Broadcast(this, new StartPlayerTurn());
-
         return true;
     }
 
     private bool OnInitializeGameSession(InitializeGameSession signal)
     {
-        boardController.Clear();
+        ClearGameStateData();
+        PopulateBoardDependencies();
+        InitializeGame();
+        Signaler.Instance.Broadcast(this, new StartPlayerTurn());
+        return true;
+    }
+
+    private void PopulateBoardDependencies()
+    {
         if (_tileSelectionController == null)
             _tileSelectionController = boardController.GetComponent<TileSelectionController>();
         if (_moveActionController == null)
             _moveActionController = boardController.GetComponent<MoveActionController>();
+    }
+
+    private void ClearGameStateData()
+    {
+        _pieces = new GameObject[8, 8];
+        _movedPawns.Clear();
+        _activePieces.Clear();
+        boardController.Clear();
 
         _white = new Player("white", true);
         _black = new Player("black", false);
         CurrentPlayer = _white;
-        _otherPlayer = _black;
-
-        InitializeGame();
-
-        Signaler.Instance.Broadcast(this, new StartPlayerTurn());
-
-        return true;
-        
+        OtherPlayer = _black;
     }
 
     private bool OnEnemyTurnFinished(FinishEnemyTurn signal)
@@ -149,11 +139,6 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
         _activePieces.Add(pieceObject.GetComponent<Piece>());
     }
 
-    public void SelectPieceAtGrid(Vector2Int gridPoint)
-    {
-        var selectedPiece = _pieces[gridPoint.x, gridPoint.y];
-        if (selectedPiece != null) boardController.SelectPiece(selectedPiece);
-    }
 
     public List<Vector2Int> MovesForPiece(GameObject pieceObject)
     {
@@ -165,8 +150,6 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
         return locations;
     }
-
-
 
     public void Move(GameObject piece, Vector2Int gridPoint)
     {
@@ -193,11 +176,6 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
         _pieces[Mathf.Clamp(targetGridPoint.x, 0, 7), Mathf.Clamp(targetGridPoint.y, 0, 7)] = piece.gameObject;
         boardController.MovePiece(piece.gameObject, targetGridPoint);    
 
-    }
-
-    public void PawnMoved(GameObject pawn)
-    {
-        _movedPawns.Add(pawn);
     }
 
     public bool HasPawnMoved(GameObject pawn)
@@ -247,7 +225,7 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
         if (piece == null)
             return false;
 
-        if (_otherPlayer.Pieces.Contains(piece))
+        if (OtherPlayer.Pieces.Contains(piece))
             return false;
 
         return true;
@@ -256,8 +234,8 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
     public void NextPlayer()
     {
         var tempPlayer = CurrentPlayer;
-        CurrentPlayer = _otherPlayer;
-        _otherPlayer = tempPlayer;
+        CurrentPlayer = OtherPlayer;
+        OtherPlayer = tempPlayer;
 
         if (CurrentPlayer.Name == "black")
             Signaler.Instance.Broadcast(this, new StartEnemyTurn());
@@ -282,10 +260,5 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
     public List<Piece> GetActiveChessPiece()
     {
         return _activePieces;
-    }
-
-    public GameObject GetCurrentSelectedPiece()
-    {
-        return boardController.GetSelectedPiece();
     }
 }
