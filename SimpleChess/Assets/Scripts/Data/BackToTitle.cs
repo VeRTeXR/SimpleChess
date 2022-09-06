@@ -1,4 +1,4 @@
-﻿namespace UI.Summary
+﻿namespace Data
 {
     public struct BackToTitle
     {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Chess.Pieces;
+using Data;
 using echo17.Signaler.Core;
 using UI.Summary;
 using UnityEngine;
