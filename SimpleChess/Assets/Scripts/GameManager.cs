@@ -163,6 +163,8 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
             _movedPawns.Add(piece.gameObject);
 
         var startGridPoint = GetPieceCurrentGridCoordinate(piece.gameObject);
+        if (startGridPoint.x < 0 && startGridPoint.y < 0)
+            return;
         _pieces[startGridPoint.x, startGridPoint.y] = null;
         
         _pieces[Mathf.Clamp(targetGridPoint.x, 0, 7), Mathf.Clamp(targetGridPoint.y, 0, 7)] = piece.gameObject;
@@ -241,8 +243,9 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
     public void CapturePieceAt(Vector2Int gridPoint)
     {
-        var pieceToCapture = GetPieceAtGrid(gridPoint);
-        if (pieceToCapture.GetComponent<Piece>() is King)
+        var capturedPieceObject = GetPieceAtGrid(gridPoint);
+        var capturedPiece = capturedPieceObject.GetComponent<Piece>();
+        if (capturedPiece is King)
         {
             
             Debug.Log(CurrentPlayer.Name
@@ -255,10 +258,12 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
             // Destroy(board.GetComponent<TileSelector>());
             // Destroy(board.GetComponent<MoveSelector>());
         }
-        CurrentPlayer.CapturedPieces.Add(pieceToCapture);
+
+        _activePieces.Remove(capturedPiece);
+        CurrentPlayer.CapturedPieces.Add(capturedPieceObject);
         _pieces[gridPoint.x, gridPoint.y] = null;
 
-        LeanPool.Despawn(pieceToCapture);
+        LeanPool.Despawn(capturedPieceObject);
     }
 
     public List<Piece> GetActiveChessPiece()

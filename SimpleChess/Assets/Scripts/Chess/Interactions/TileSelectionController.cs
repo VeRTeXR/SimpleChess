@@ -1,17 +1,39 @@
-﻿using Lean.Pool;
+﻿using System;
+using echo17.Signaler.Core;
+using Lean.Pool;
 using TMPro;
+using UI;
 using UnityEngine;
 using Utilities;
 
 namespace Chess.Interactions
 {
-    public class TileSelectionController: MonoBehaviour
+    public class TileSelectionController: MonoBehaviour, ISubscriber
     {
         [SerializeField] private GameObject tileHighlightPrefab;
 
         private GameObject _tileHighlightInstance;
         private Camera _mainCamera;
         private MoveActionController _moveActionController;
+        private bool _isActive;
+
+        private void Awake()
+        {
+            Signaler.Instance.Subscribe<InitializeGameSession>(this, OnGameSessionInitialized);
+            Signaler.Instance.Subscribe<GameOver>(this, OnGameOver);
+        }
+        private bool OnGameSessionInitialized(InitializeGameSession signal)
+        {
+            _isActive = true;
+            return true;
+        }
+
+        private bool OnGameOver(GameOver signal)
+        {
+            _isActive = false;
+            return true;
+        }
+
 
         private void Start ()
         {
@@ -24,8 +46,10 @@ namespace Chess.Interactions
             _tileHighlightInstance.SetActive(false);
         }
 
+     
         private void Update ()
         {
+            if (!_isActive) return;
             var ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
 
             if (Physics.Raycast(ray, out var hit))
