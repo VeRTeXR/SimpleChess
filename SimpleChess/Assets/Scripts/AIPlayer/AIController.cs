@@ -46,6 +46,7 @@ namespace AIPlayer
             _enemyActivePiece = allActivePieces.Where(piece => !piece.IsPlayerPiece).ToList();
             
             //TODO:: Use minimax and alpha beta pruning for decision making 
+            //ref: https://www.freecodecamp.org/news/simple-chess-ai-step-by-step-1d55a9266977/
             
             while (_movableCoordinateList.Count <= 0 )
             {
