@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AIPlayer;
 using Chess;
 using Chess.Interactions;
 using Chess.Pieces;
@@ -7,7 +8,7 @@ using echo17.Signaler.Core;
 using Lean.Pool;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour, IBroadcaster
+public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 {
     public static GameManager Instance;
 
@@ -37,13 +38,23 @@ public class GameManager : MonoBehaviour, IBroadcaster
     private Player _otherPlayer;
     private TileSelectionController _tileSelectionController;
     private MoveActionController _moveActionController;
-    
-    
+    public bool IsGameOver;
+    private List<Piece> _activePieces = new List<Piece>();
+
+
     private void Awake()
     {
         if(Instance != null) 
             Destroy(Instance);
         Instance = this;
+
+        Signaler.Instance.Subscribe<FinishEnemyTurn>(this, OnEnemyTurnFinished);
+    }
+
+    private bool OnEnemyTurnFinished(FinishEnemyTurn signal)
+    {
+        NextPlayer();
+        return true;
     }
 
     private void Start ()
@@ -94,9 +105,11 @@ public class GameManager : MonoBehaviour, IBroadcaster
 
     private void AddPiece(GameObject prefab, Player player, int col, int row)
     {
+        
         var pieceObject = boardController.AddPiece(prefab, col, row);
         player.Pieces.Add(pieceObject);
         _pieces[col, row] = pieceObject;
+        _activePieces.Add(pieceObject.GetComponent<Piece>());
     }
 
     public void SelectPieceAtGrid(Vector2Int gridPoint)
@@ -116,18 +129,31 @@ public class GameManager : MonoBehaviour, IBroadcaster
         return locations;
     }
 
+
+
     public void Move(GameObject piece, Vector2Int gridPoint)
     {
         var pieceComponent = piece.GetComponent<Piece>();
-        if (pieceComponent is Pawn && !HasPawnMoved(piece))
-        {
+        if (pieceComponent is Pawn && !HasPawnMoved(piece)) 
             _movedPawns.Add(piece);
-        }
 
-        Vector2Int startGridPoint = GetPieceCurrentGridCoordinate(piece);
+        var startGridPoint = GetPieceCurrentGridCoordinate(piece);
         _pieces[startGridPoint.x, startGridPoint.y] = null;
         _pieces[gridPoint.x, gridPoint.y] = piece;
-        boardController.MovePiece(piece, gridPoint);
+        boardController.MovePiece(piece, gridPoint);        
+    }
+
+    public void AIMove(Piece piece, Vector2Int targetGridPoint)
+    {
+        if (piece is Pawn && !HasPawnMoved(piece.gameObject)) 
+            _movedPawns.Add(piece.gameObject);
+
+        var startGridPoint = GetPieceCurrentGridCoordinate(piece.gameObject);
+        _pieces[startGridPoint.x, startGridPoint.y] = null;
+        
+        _pieces[Mathf.Clamp(targetGridPoint.x, 0, 7), Mathf.Clamp(targetGridPoint.y, 0, 7)] = piece.gameObject;
+        boardController.MovePiece(piece.gameObject, targetGridPoint);    
+
     }
 
     public void PawnMoved(GameObject pawn)
@@ -192,6 +218,10 @@ public class GameManager : MonoBehaviour, IBroadcaster
         var tempPlayer = CurrentPlayer;
         CurrentPlayer = _otherPlayer;
         _otherPlayer = tempPlayer;
+        
+        if (CurrentPlayer.Name == "black") 
+            Signaler.Instance.Broadcast(this, new StartEnemyTurn());
+
     }
 
     public void CapturePieceAt(Vector2Int gridPoint)
@@ -203,6 +233,8 @@ public class GameManager : MonoBehaviour, IBroadcaster
             Debug.Log(CurrentPlayer.Name
                       + " wins!");
             Signaler.Instance.Broadcast(this, new GameOver {WonPlayerData = CurrentPlayer});
+
+            IsGameOver = true;
             _moveActionController.GameOver();
             _tileSelectionController.GameOver();
             // Destroy(board.GetComponent<TileSelector>());
@@ -212,5 +244,10 @@ public class GameManager : MonoBehaviour, IBroadcaster
         _pieces[gridPoint.x, gridPoint.y] = null;
 
         LeanPool.Despawn(pieceToCapture);
+    }
+
+    public List<Piece> GetActiveChessPiece()
+    {
+        return _activePieces;
     }
 }
