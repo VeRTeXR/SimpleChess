@@ -43,6 +43,7 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
     private TileSelectionController _tileSelectionController;
     private MoveActionController _moveActionController;
     private List<Piece> _activePieces = new List<Piece>();
+    public Player OtherPlayer => _otherPlayer;
 
 
     private void Awake()
@@ -82,6 +83,9 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
     private bool OnInitializeGameSession(InitializeGameSession signal)
     {
+        _pieces = new GameObject[8, 8];
+        _movedPawns.Clear();
+        _activePieces.Clear();
         boardController.Clear();
         if (_tileSelectionController == null)
             _tileSelectionController = boardController.GetComponent<TileSelectionController>();

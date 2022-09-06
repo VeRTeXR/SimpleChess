@@ -1229,7 +1229,6 @@ MonoBehaviour:
   blackKnight: {fileID: 1113020039138572385, guid: 011ec6c4daa5e1a4dae52318625f5744, type: 3}
   blackRook: {fileID: 4325566053638389798, guid: 9f6c4db2e6544c545a7b532624a8a12a, type: 3}
   blackPawn: {fileID: 3637170398270635622, guid: 45e2cd98c72ac6344a732edf1a98d911, type: 3}
-  IsGameOver: 0
 --- !u!4 &1136904522
 Transform:
   m_ObjectHideFlags: 0
@@ -1941,6 +1940,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27d4f093d50c0c743a5699851193ba98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  layoutObject: {fileID: 0}
   winnerText: {fileID: 0}
   restartButton: {fileID: 0}
   exitButton: {fileID: 0}
@@ -2094,7 +2094,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1917358696
 RectTransform:
   m_ObjectHideFlags: 0
