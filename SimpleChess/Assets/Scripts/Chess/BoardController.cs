@@ -24,7 +24,6 @@ namespace Chess
      
         public void MovePiece(GameObject piece, Vector2Int gridPoint)
         {
-            Debug.LogError("Move : "+piece.transform.name +  " : " +gridPoint.x + " , " + gridPoint.y);
             LeanTween.move(piece, Geometry.PointFromGrid(gridPoint), 0.2f).setEase(LeanTweenType.easeInOutCubic).setOnComplete(
                 () =>
                 {

@@ -45,11 +45,8 @@ namespace Chess.Interactions
                 if (!Input.GetMouseButtonDown(0)) 
                     return;
 
-                Debug.LogError(hit.transform.name);
                 
                 var pieceAtGrid = GameManager.Instance.GetPieceAtGrid(gridPoint);
-                if(pieceAtGrid!=null)
-                    Debug.LogError(pieceAtGrid.transform.name);
                 if (pieceAtGrid == null)
                 {
                     if (!_moveLocations.Contains(gridPoint))
@@ -60,24 +57,13 @@ namespace Chess.Interactions
                 {
                     if (pieceAtGrid == GameManager.Instance.boardController.GetSelectedPiece())
                     {
-                        enabled = false;
-                        CancelMove();
-                        _tileSelectionController.EnterState();
+                        UnselectReturnToSelectPiece();
                         return;
                     }
 
                     if (pieceAtGrid.GetComponent<Piece>().IsPlayerPiece)
                     {
-                        CancelMove();
-                        if (GameManager.Instance.DoesPieceBelongToCurrentPlayer(pieceAtGrid))
-                        {
-                            
-                            GameManager.Instance.SelectPiece(pieceAtGrid);
-                            EnterState(pieceAtGrid);
-                                
-                            return;
-                        }
-
+                        if (UnselectThenSelectValidPiece(pieceAtGrid)) return;
                         return;
                     }
                     if (!_moveLocations.Contains(gridPoint))
@@ -93,6 +79,27 @@ namespace Chess.Interactions
             {
                 _tileHighlight.SetActive(false);
             }
+        }
+
+        private bool UnselectThenSelectValidPiece(GameObject pieceAtGrid)
+        {
+            CancelMove();
+            if (GameManager.Instance.DoesPieceBelongToCurrentPlayer(pieceAtGrid))
+            {
+                GameManager.Instance.SelectPiece(pieceAtGrid);
+                EnterState(pieceAtGrid);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private void UnselectReturnToSelectPiece()
+        {
+            enabled = false;
+            CancelMove();
+            _tileSelectionController.EnterState();
         }
 
 
