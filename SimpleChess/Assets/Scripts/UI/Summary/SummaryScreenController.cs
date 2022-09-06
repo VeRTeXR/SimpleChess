@@ -39,7 +39,8 @@ namespace UI.Summary
 
         private void ExitGame()
         {
-            Application.Quit();
+            layoutObject.SetActive(false);
+            Signaler.Instance.Broadcast(this, new BackToTitle());
         }
 
         private void RestartGame()

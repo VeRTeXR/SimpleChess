@@ -42,7 +42,6 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
     private Player _otherPlayer;
     private TileSelectionController _tileSelectionController;
     private MoveActionController _moveActionController;
-    public bool IsGameOver;
     private List<Piece> _activePieces = new List<Piece>();
 
 
@@ -60,7 +59,9 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
     private bool OnRestartGameSession(RestartSession signal)
     {
-        IsGameOver = false;
+        _pieces = new GameObject[8, 8];
+        _movedPawns.Clear();
+        _activePieces.Clear();
         boardController.Clear();
         if (_tileSelectionController == null)
             _tileSelectionController = boardController.GetComponent<TileSelectionController>();
@@ -81,7 +82,6 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
     private bool OnInitializeGameSession(InitializeGameSession signal)
     {
-        IsGameOver = false;
         boardController.Clear();
         if (_tileSelectionController == null)
             _tileSelectionController = boardController.GetComponent<TileSelectionController>();
@@ -143,7 +143,6 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
     private void AddPiece(GameObject prefab, Player player, int col, int row)
     {
-        
         var pieceObject = boardController.AddPiece(prefab, col, row);
         player.Pieces.Add(pieceObject);
         _pieces[col, row] = pieceObject;
@@ -183,7 +182,6 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
     public void AIMove(Piece piece, Vector2Int targetGridPoint)
     {
-        Debug.LogError("AI Move : "+piece.transform.name + " :to: "+targetGridPoint);
         if (piece is Pawn && !HasPawnMoved(piece.gameObject)) 
             _movedPawns.Add(piece.gameObject);
 
@@ -217,9 +215,10 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
         boardController.DeselectPiece(piece);
     }
 
-    public bool DoesPieceBelongToCurrentPlayer(GameObject piece)
+    public bool DoesPieceBelongToCurrentPlayer(GameObject pieceObject)
     {
-        return CurrentPlayer.Pieces.Contains(piece);
+        var pieceComponent = pieceObject.GetComponent<Piece>();
+        return CurrentPlayer.Pieces.Contains(pieceObject) && pieceComponent.IsPlayerPiece;
     }
 
     public GameObject GetPieceAtGrid(Vector2Int gridPoint)
@@ -231,7 +230,7 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
         return _pieces[gridPoint.x, gridPoint.y];
     }
 
-    public Vector2Int GetPieceCurrentGridCoordinate(GameObject piece)
+    private Vector2Int GetPieceCurrentGridCoordinate(GameObject piece)
     {
         for (var i = 0; i < 8; i++)
             for (var j = 0; j < 8; j++)
@@ -241,7 +240,7 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
         return new Vector2Int(-1, -1);
     }
 
-    public bool IsFriendlyPieceAt(Vector2Int gridPoint)
+    private bool IsFriendlyPieceAt(Vector2Int gridPoint)
     {
         var piece = GetPieceAtGrid(gridPoint);
 
@@ -270,24 +269,23 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
     {
         var capturedPieceObject = GetPieceAtGrid(gridPoint);
         var capturedPiece = capturedPieceObject.GetComponent<Piece>();
-        if (capturedPiece is King)
-        {
-            
-            Debug.Log(CurrentPlayer.Name
-                      + " wins!");
+        if (capturedPiece is King) 
             Signaler.Instance.Broadcast(this, new GameOver {WonPlayerData = CurrentPlayer});
-            IsGameOver = true;
-        }
 
         _activePieces.Remove(capturedPiece);
+        
         CurrentPlayer.CapturedPieces.Add(capturedPieceObject);
         _pieces[gridPoint.x, gridPoint.y] = null;
-
-        LeanPool.Despawn(capturedPieceObject);
+        LeanPool.Links[capturedPieceObject].Despawn(capturedPieceObject);
     }
 
     public List<Piece> GetActiveChessPiece()
     {
         return _activePieces;
+    }
+
+    public GameObject GetCurrentSelectedPiece()
+    {
+        return boardController.GetSelectedPiece();
     }
 }

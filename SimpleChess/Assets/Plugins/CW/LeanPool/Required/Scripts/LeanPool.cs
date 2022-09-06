@@ -82,7 +82,8 @@ namespace Lean.Pool
 				if (LeanGameObjectPool.TryFindPoolByPrefab(prefab, ref pool) == false)
 				{
 					pool = new GameObject("LeanPool (" + prefab.name + ")").AddComponent<LeanGameObjectPool>();
-
+					pool.Recycle = true;
+					pool.Persist = true;
 					pool.Prefab = prefab;
 				}
 

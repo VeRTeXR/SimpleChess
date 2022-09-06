@@ -1,4 +1,6 @@
+using System;
 using echo17.Signaler.Core;
+using UI.Summary;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,7 +9,19 @@ namespace UI
     public class StartScreenController : MonoBehaviour, ISubscriber, IBroadcaster
     {
         [SerializeField] private GameObject startScreenLayout;
-        [SerializeField] private Button startGameButton;   
+        [SerializeField] private Button startGameButton;
+
+        private void Awake()
+        {
+            Signaler.Instance.Subscribe<BackToTitle>(this, OnBackToTitle);
+        }
+
+        private bool OnBackToTitle(BackToTitle signal)
+        {
+            startScreenLayout.SetActive(true);
+            SetupButtonEvents();
+            return true;
+        }
         
         private void Start()
         {

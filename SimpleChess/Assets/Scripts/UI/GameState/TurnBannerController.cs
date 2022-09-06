@@ -28,6 +28,8 @@ namespace UI.GameState
 
         private bool OnPlayerTurnStarted(StartPlayerTurn signal)
         {
+            LeanTween.cancel(gameObject);
+            
             turnText.text = "Player Turn";
             banner.transform.localPosition = new Vector3(0,-Screen.height,0); 
             layout.SetActive(true);
@@ -37,6 +39,8 @@ namespace UI.GameState
 
         private bool OnEnemyTurnStarted(StartEnemyTurn signal)
         {
+            LeanTween.cancel(gameObject);
+
             turnText.text = "Enemy Turn";
             banner.transform.localPosition = new Vector3(0,-Screen.height,0); 
             layout.SetActive(true);

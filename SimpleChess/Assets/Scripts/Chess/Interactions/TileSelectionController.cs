@@ -1,4 +1,5 @@
 ﻿using System;
+using Chess.Pieces;
 using echo17.Signaler.Core;
 using Lean.Pool;
 using TMPro;
@@ -71,6 +72,7 @@ namespace Chess.Interactions
                 if (Input.GetMouseButtonDown(0))
                 {
                     var selectedPiece = GameManager.Instance.GetPieceAtGrid(gridPoint);
+                    if (selectedPiece == null) return;
                     if (GameManager.Instance.DoesPieceBelongToCurrentPlayer(selectedPiece))
                     {
                         GameManager.Instance.SelectPiece(selectedPiece);

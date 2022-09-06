@@ -11,7 +11,8 @@ namespace Chess
         [SerializeField] private Material selectedMaterial;
 
         private List<GameObject> _pieceObjectList = new List<GameObject>();
-        
+        private GameObject _currentSelectedPiece;
+
         public GameObject AddPiece(GameObject piece, int col, int row)
         {
             var gridPoint = Geometry.GridPoint(col, row);
@@ -20,11 +21,7 @@ namespace Chess
             return newPiece;
         }
 
-        public void RemovePiece(GameObject piece)
-        {
-            LeanPool.Despawn(piece);
-        }
-
+     
         public void MovePiece(GameObject piece, Vector2Int gridPoint)
         {
             Debug.LogError("Move : "+piece.transform.name +  " : " +gridPoint.x + " , " + gridPoint.y);
@@ -33,6 +30,7 @@ namespace Chess
 
         public void SelectPiece(GameObject piece)
         {
+            _currentSelectedPiece = piece;
             var renderers = piece.GetComponentInChildren<MeshRenderer>();
             renderers.material = selectedMaterial;
         }
@@ -45,8 +43,18 @@ namespace Chess
 
         public void Clear()
         {
-            foreach (var pieceObject in _pieceObjectList) LeanPool.Despawn(pieceObject);
+            foreach (var pieceObject in _pieceObjectList) RemovePiece(pieceObject);
             _pieceObjectList.Clear();
+        }
+
+        private void RemovePiece(GameObject piece)
+        {
+            LeanPool.Links[piece].Despawn(piece);
+        }
+
+        public GameObject GetSelectedPiece()
+        {
+            return _currentSelectedPiece;
         }
     }
 }
