@@ -1,14 +1,10 @@
 using System.Collections.Generic;
-using AIPlayer;
 using Chess;
 using Chess.Interactions;
 using Chess.Pieces;
 using Data;
 using echo17.Signaler.Core;
 using Lean.Pool;
-using UI;
-using UI.GameState;
-using UI.Summary;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
