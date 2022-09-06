@@ -1,13 +1,18 @@
 using System.Collections.Generic;
+using AIPlayer;
 using Chess;
 using Chess.Interactions;
 using Chess.Pieces;
 using Data;
 using echo17.Signaler.Core;
 using Lean.Pool;
+using UI;
+using UI.GameState;
+using UI.Summary;
 using UnityEngine;
+using UnityEngine.Timeline;
 
-public class GameManager : MonoBehaviour, IBroadcaster
+public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 {
     public static GameManager Instance;
 
@@ -37,26 +42,70 @@ public class GameManager : MonoBehaviour, IBroadcaster
     private Player _otherPlayer;
     private TileSelectionController _tileSelectionController;
     private MoveActionController _moveActionController;
-    
-    
+    private List<Piece> _activePieces = new List<Piece>();
+
+
     private void Awake()
     {
         if(Instance != null) 
             Destroy(Instance);
         Instance = this;
+
+        Signaler.Instance.Subscribe<InitializeGameSession>(this, OnInitializeGameSession);
+        Signaler.Instance.Subscribe<FinishEnemyTurn>(this, OnEnemyTurnFinished);
+        Signaler.Instance.Subscribe<RestartSession>(this, OnRestartGameSession);
+
     }
 
-    private void Start ()
+    private bool OnRestartGameSession(RestartSession signal)
     {
+        _pieces = new GameObject[8, 8];
+        _movedPawns.Clear();
+        _activePieces.Clear();
+        boardController.Clear();
+        if (_tileSelectionController == null)
+            _tileSelectionController = boardController.GetComponent<TileSelectionController>();
+        if (_moveActionController == null)
+            _moveActionController = boardController.GetComponent<MoveActionController>();
+
         _white = new Player("white", true);
         _black = new Player("black", false);
-        _tileSelectionController = boardController.GetComponent<TileSelectionController>();
-        _moveActionController = boardController.GetComponent<MoveActionController>();
         CurrentPlayer = _white;
         _otherPlayer = _black;
 
         InitializeGame();
+
+        Signaler.Instance.Broadcast(this, new StartPlayerTurn());
+
+        return true;
     }
+
+    private bool OnInitializeGameSession(InitializeGameSession signal)
+    {
+        boardController.Clear();
+        if (_tileSelectionController == null)
+            _tileSelectionController = boardController.GetComponent<TileSelectionController>();
+        if (_moveActionController == null)
+            _moveActionController = boardController.GetComponent<MoveActionController>();
+
+        _white = new Player("white", true);
+        _black = new Player("black", false);
+        CurrentPlayer = _white;
+        _otherPlayer = _black;
+
+        InitializeGame();
+
+        Signaler.Instance.Broadcast(this, new StartPlayerTurn());
+
+        return true;
+        
+    }
+
+    private bool OnEnemyTurnFinished(FinishEnemyTurn signal)
+    {
+        return true;
+    }
+
 
     private void InitializeGame()
     {
@@ -97,6 +146,7 @@ public class GameManager : MonoBehaviour, IBroadcaster
         var pieceObject = boardController.AddPiece(prefab, col, row);
         player.Pieces.Add(pieceObject);
         _pieces[col, row] = pieceObject;
+        _activePieces.Add(pieceObject.GetComponent<Piece>());
     }
 
     public void SelectPieceAtGrid(Vector2Int gridPoint)
@@ -116,18 +166,33 @@ public class GameManager : MonoBehaviour, IBroadcaster
         return locations;
     }
 
+
+
     public void Move(GameObject piece, Vector2Int gridPoint)
     {
         var pieceComponent = piece.GetComponent<Piece>();
-        if (pieceComponent is Pawn && !HasPawnMoved(piece))
-        {
+        if (pieceComponent is Pawn && !HasPawnMoved(piece)) 
             _movedPawns.Add(piece);
-        }
 
-        Vector2Int startGridPoint = GetPieceCurrentGridCoordinate(piece);
+        var startGridPoint = GetPieceCurrentGridCoordinate(piece);
         _pieces[startGridPoint.x, startGridPoint.y] = null;
         _pieces[gridPoint.x, gridPoint.y] = piece;
-        boardController.MovePiece(piece, gridPoint);
+        boardController.MovePiece(piece, gridPoint);        
+    }
+
+    public void AIMove(Piece piece, Vector2Int targetGridPoint)
+    {
+        if (piece is Pawn && !HasPawnMoved(piece.gameObject)) 
+            _movedPawns.Add(piece.gameObject);
+
+        var startGridPoint = GetPieceCurrentGridCoordinate(piece.gameObject);
+        if (startGridPoint.x < 0 && startGridPoint.y < 0)
+            return;
+        _pieces[startGridPoint.x, startGridPoint.y] = null;
+        
+        _pieces[Mathf.Clamp(targetGridPoint.x, 0, 7), Mathf.Clamp(targetGridPoint.y, 0, 7)] = piece.gameObject;
+        boardController.MovePiece(piece.gameObject, targetGridPoint);    
+
     }
 
     public void PawnMoved(GameObject pawn)
@@ -150,9 +215,10 @@ public class GameManager : MonoBehaviour, IBroadcaster
         boardController.DeselectPiece(piece);
     }
 
-    public bool DoesPieceBelongToCurrentPlayer(GameObject piece)
+    public bool DoesPieceBelongToCurrentPlayer(GameObject pieceObject)
     {
-        return CurrentPlayer.Pieces.Contains(piece);
+        var pieceComponent = pieceObject.GetComponent<Piece>();
+        return CurrentPlayer.Pieces.Contains(pieceObject) && pieceComponent.IsPlayerPiece;
     }
 
     public GameObject GetPieceAtGrid(Vector2Int gridPoint)
@@ -164,7 +230,7 @@ public class GameManager : MonoBehaviour, IBroadcaster
         return _pieces[gridPoint.x, gridPoint.y];
     }
 
-    public Vector2Int GetPieceCurrentGridCoordinate(GameObject piece)
+    private Vector2Int GetPieceCurrentGridCoordinate(GameObject piece)
     {
         for (var i = 0; i < 8; i++)
             for (var j = 0; j < 8; j++)
@@ -174,7 +240,7 @@ public class GameManager : MonoBehaviour, IBroadcaster
         return new Vector2Int(-1, -1);
     }
 
-    public bool IsFriendlyPieceAt(Vector2Int gridPoint)
+    private bool IsFriendlyPieceAt(Vector2Int gridPoint)
     {
         var piece = GetPieceAtGrid(gridPoint);
 
@@ -192,25 +258,34 @@ public class GameManager : MonoBehaviour, IBroadcaster
         var tempPlayer = CurrentPlayer;
         CurrentPlayer = _otherPlayer;
         _otherPlayer = tempPlayer;
+
+        if (CurrentPlayer.Name == "black")
+            Signaler.Instance.Broadcast(this, new StartEnemyTurn());
+        else
+            Signaler.Instance.Broadcast(this, new StartPlayerTurn());
     }
 
     public void CapturePieceAt(Vector2Int gridPoint)
     {
-        var pieceToCapture = GetPieceAtGrid(gridPoint);
-        if (pieceToCapture.GetComponent<Piece>() is King)
-        {
-            
-            Debug.Log(CurrentPlayer.Name
-                      + " wins!");
+        var capturedPieceObject = GetPieceAtGrid(gridPoint);
+        var capturedPiece = capturedPieceObject.GetComponent<Piece>();
+        if (capturedPiece is King) 
             Signaler.Instance.Broadcast(this, new GameOver {WonPlayerData = CurrentPlayer});
-            _moveActionController.GameOver();
-            _tileSelectionController.GameOver();
-            // Destroy(board.GetComponent<TileSelector>());
-            // Destroy(board.GetComponent<MoveSelector>());
-        }
-        CurrentPlayer.CapturedPieces.Add(pieceToCapture);
-        _pieces[gridPoint.x, gridPoint.y] = null;
 
-        LeanPool.Despawn(pieceToCapture);
+        _activePieces.Remove(capturedPiece);
+        
+        CurrentPlayer.CapturedPieces.Add(capturedPieceObject);
+        _pieces[gridPoint.x, gridPoint.y] = null;
+        LeanPool.Links[capturedPieceObject].Despawn(capturedPieceObject);
+    }
+
+    public List<Piece> GetActiveChessPiece()
+    {
+        return _activePieces;
+    }
+
+    public GameObject GetCurrentSelectedPiece()
+    {
+        return boardController.GetSelectedPiece();
     }
 }

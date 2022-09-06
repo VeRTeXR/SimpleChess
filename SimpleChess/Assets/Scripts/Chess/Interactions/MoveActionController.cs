@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using Chess.Pieces;
 using Lean.Pool;
+using Unity.VisualScripting;
 using UnityEngine;
 using Utilities;
 
@@ -39,15 +41,48 @@ namespace Chess.Interactions
 
                 _tileHighlight.SetActive(true);
                 _tileHighlight.transform.position = Geometry.PointFromGrid(gridPoint);
+                
                 if (!Input.GetMouseButtonDown(0)) 
                     return;
-                if (!_moveLocations.Contains(gridPoint))
-                    return;
 
-                if (GameManager.Instance.GetPieceAtGrid(gridPoint) == null)
+                Debug.LogError(hit.transform.name);
+                
+                var pieceAtGrid = GameManager.Instance.GetPieceAtGrid(gridPoint);
+                if(pieceAtGrid!=null)
+                    Debug.LogError(pieceAtGrid.transform.name);
+                if (pieceAtGrid == null)
+                {
+                    if (!_moveLocations.Contains(gridPoint))
+                        return;
                     GameManager.Instance.Move(_movingPiece, gridPoint);
+                }
                 else
                 {
+                    if (pieceAtGrid == GameManager.Instance.boardController.GetSelectedPiece())
+                    {
+                        enabled = false;
+                        CancelMove();
+                        _tileSelectionController.EnterState();
+                        return;
+                    }
+
+                    if (pieceAtGrid.GetComponent<Piece>().IsPlayerPiece)
+                    {
+                        CancelMove();
+                        if (GameManager.Instance.DoesPieceBelongToCurrentPlayer(pieceAtGrid))
+                        {
+                            
+                            GameManager.Instance.SelectPiece(pieceAtGrid);
+                            EnterState(pieceAtGrid);
+                                
+                            return;
+                        }
+
+                        return;
+                    }
+                    if (!_moveLocations.Contains(gridPoint))
+                        return;
+
                     GameManager.Instance.CapturePieceAt(gridPoint);
                     GameManager.Instance.Move(_movingPiece, gridPoint);
                 }
@@ -60,14 +95,12 @@ namespace Chess.Interactions
             }
         }
 
+
         private void CancelMove()
         {
-            enabled = false;
-
             foreach (var highlight in _locationHighlights) LeanPool.Despawn(highlight);
-
             GameManager.Instance.DeselectPiece(_movingPiece);
-            _tileSelectionController.EnterState();
+            
         }
 
         public void EnterState(GameObject piece)
@@ -106,9 +139,5 @@ namespace Chess.Interactions
             foreach (var highlight in _locationHighlights) LeanPool.Despawn(highlight);
         }
 
-        public void GameOver()
-        {
-            enabled = false;
-        }
     }
 }

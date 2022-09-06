@@ -1,17 +1,49 @@
-﻿using Lean.Pool;
+﻿using System;
+using Chess.Pieces;
+using echo17.Signaler.Core;
+using Lean.Pool;
 using TMPro;
+using UI;
+using UI.Summary;
 using UnityEngine;
 using Utilities;
 
 namespace Chess.Interactions
 {
-    public class TileSelectionController: MonoBehaviour
+    public class TileSelectionController: MonoBehaviour, ISubscriber
     {
         [SerializeField] private GameObject tileHighlightPrefab;
 
         private GameObject _tileHighlightInstance;
         private Camera _mainCamera;
         private MoveActionController _moveActionController;
+        private bool _isActive;
+
+        private void Awake()
+        {
+            Signaler.Instance.Subscribe<InitializeGameSession>(this, OnGameSessionInitialized);
+            Signaler.Instance.Subscribe<RestartSession>(this, OnRestartSession);
+            Signaler.Instance.Subscribe<GameOver>(this, OnGameOver);
+        }
+
+        private bool OnRestartSession(RestartSession signal)
+        {
+            _isActive = true;
+            return true;
+        }
+
+        private bool OnGameSessionInitialized(InitializeGameSession signal)
+        {
+            _isActive = true;
+            return true;
+        }
+
+        private bool OnGameOver(GameOver signal)
+        {
+            _isActive = false;
+            return true;
+        }
+
 
         private void Start ()
         {
@@ -24,8 +56,10 @@ namespace Chess.Interactions
             _tileHighlightInstance.SetActive(false);
         }
 
+     
         private void Update ()
         {
+            if (!_isActive) return;
             var ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
 
             if (Physics.Raycast(ray, out var hit))
@@ -38,6 +72,7 @@ namespace Chess.Interactions
                 if (Input.GetMouseButtonDown(0))
                 {
                     var selectedPiece = GameManager.Instance.GetPieceAtGrid(gridPoint);
+                    if (selectedPiece == null) return;
                     if (GameManager.Instance.DoesPieceBelongToCurrentPlayer(selectedPiece))
                     {
                         GameManager.Instance.SelectPiece(selectedPiece);
@@ -63,9 +98,5 @@ namespace Chess.Interactions
             _moveActionController.EnterState(movingPiece);
         }
 
-        public void GameOver()
-        {
-            enabled = false;
-        }
-    }
+     }
 }

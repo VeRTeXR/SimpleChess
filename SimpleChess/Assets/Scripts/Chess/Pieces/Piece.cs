@@ -6,6 +6,7 @@ namespace Chess.Pieces
 {
     public abstract class Piece : MonoBehaviour
     {
+        public bool IsPlayerPiece;
         protected PieceType Type;
 
         protected Vector2Int[] RookDirections = {new Vector2Int(0,1), new Vector2Int(1, 0),

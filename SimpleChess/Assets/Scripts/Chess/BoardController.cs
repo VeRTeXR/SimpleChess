@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Lean.Pool;
 using UnityEngine;
 using Utilities;
@@ -9,26 +10,27 @@ namespace Chess
         [SerializeField] private Material defaultMaterial;
         [SerializeField] private Material selectedMaterial;
 
-        
+        private List<GameObject> _pieceObjectList = new List<GameObject>();
+        private GameObject _currentSelectedPiece;
+
         public GameObject AddPiece(GameObject piece, int col, int row)
         {
             var gridPoint = Geometry.GridPoint(col, row);
             var newPiece = LeanPool.Spawn(piece, Geometry.PointFromGrid(gridPoint), Quaternion.identity, gameObject.transform);
+            _pieceObjectList.Add(newPiece);
             return newPiece;
         }
 
-        public void RemovePiece(GameObject piece)
-        {
-            LeanPool.Despawn(piece);
-        }
-
+     
         public void MovePiece(GameObject piece, Vector2Int gridPoint)
         {
+            Debug.LogError("Move : "+piece.transform.name +  " : " +gridPoint.x + " , " + gridPoint.y);
             piece.transform.position = Geometry.PointFromGrid(gridPoint);
         }
 
         public void SelectPiece(GameObject piece)
         {
+            _currentSelectedPiece = piece;
             var renderers = piece.GetComponentInChildren<MeshRenderer>();
             renderers.material = selectedMaterial;
         }
@@ -37,6 +39,22 @@ namespace Chess
         {
             var renderers = piece.GetComponentInChildren<MeshRenderer>();
             renderers.material = defaultMaterial;
+        }
+
+        public void Clear()
+        {
+            foreach (var pieceObject in _pieceObjectList) RemovePiece(pieceObject);
+            _pieceObjectList.Clear();
+        }
+
+        private void RemovePiece(GameObject piece)
+        {
+            LeanPool.Links[piece].Despawn(piece);
+        }
+
+        public GameObject GetSelectedPiece()
+        {
+            return _currentSelectedPiece;
         }
     }
 }
