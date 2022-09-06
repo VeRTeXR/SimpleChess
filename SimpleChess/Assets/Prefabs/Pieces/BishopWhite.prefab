@@ -128,3 +128,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f34f92d10535474aa150c391edeffb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPiece: 1
+  isMoved: 0
+  isPlayerPiece: 1
