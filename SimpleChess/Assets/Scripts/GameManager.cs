@@ -8,6 +8,7 @@ using echo17.Signaler.Core;
 using Lean.Pool;
 using UI;
 using UI.GameState;
+using UI.Summary;
 using UnityEngine;
 using UnityEngine.Timeline;
 
@@ -53,10 +54,34 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
         Signaler.Instance.Subscribe<InitializeGameSession>(this, OnInitializeGameSession);
         Signaler.Instance.Subscribe<FinishEnemyTurn>(this, OnEnemyTurnFinished);
+        Signaler.Instance.Subscribe<RestartSession>(this, OnRestartGameSession);
+
+    }
+
+    private bool OnRestartGameSession(RestartSession signal)
+    {
+        IsGameOver = false;
+        boardController.Clear();
+        if (_tileSelectionController == null)
+            _tileSelectionController = boardController.GetComponent<TileSelectionController>();
+        if (_moveActionController == null)
+            _moveActionController = boardController.GetComponent<MoveActionController>();
+
+        _white = new Player("white", true);
+        _black = new Player("black", false);
+        CurrentPlayer = _white;
+        _otherPlayer = _black;
+
+        InitializeGame();
+
+        Signaler.Instance.Broadcast(this, new StartPlayerTurn());
+
+        return true;
     }
 
     private bool OnInitializeGameSession(InitializeGameSession signal)
     {
+        IsGameOver = false;
         boardController.Clear();
         if (_tileSelectionController == null)
             _tileSelectionController = boardController.GetComponent<TileSelectionController>();
@@ -251,12 +276,7 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
             Debug.Log(CurrentPlayer.Name
                       + " wins!");
             Signaler.Instance.Broadcast(this, new GameOver {WonPlayerData = CurrentPlayer});
-
             IsGameOver = true;
-            _moveActionController.GameOver();
-            _tileSelectionController.GameOver();
-            // Destroy(board.GetComponent<TileSelector>());
-            // Destroy(board.GetComponent<MoveSelector>());
         }
 
         _activePieces.Remove(capturedPiece);

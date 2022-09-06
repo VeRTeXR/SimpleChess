@@ -3,6 +3,7 @@ using echo17.Signaler.Core;
 using Lean.Pool;
 using TMPro;
 using UI;
+using UI.Summary;
 using UnityEngine;
 using Utilities;
 
@@ -20,8 +21,16 @@ namespace Chess.Interactions
         private void Awake()
         {
             Signaler.Instance.Subscribe<InitializeGameSession>(this, OnGameSessionInitialized);
+            Signaler.Instance.Subscribe<RestartSession>(this, OnRestartSession);
             Signaler.Instance.Subscribe<GameOver>(this, OnGameOver);
         }
+
+        private bool OnRestartSession(RestartSession signal)
+        {
+            _isActive = true;
+            return true;
+        }
+
         private bool OnGameSessionInitialized(InitializeGameSession signal)
         {
             _isActive = true;
@@ -87,9 +96,5 @@ namespace Chess.Interactions
             _moveActionController.EnterState(movingPiece);
         }
 
-        public void GameOver()
-        {
-            enabled = false;
-        }
-    }
+     }
 }

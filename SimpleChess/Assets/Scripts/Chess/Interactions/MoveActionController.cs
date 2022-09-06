@@ -106,9 +106,5 @@ namespace Chess.Interactions
             foreach (var highlight in _locationHighlights) LeanPool.Despawn(highlight);
         }
 
-        public void GameOver()
-        {
-            enabled = false;
-        }
     }
 }

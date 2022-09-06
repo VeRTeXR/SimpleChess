@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Chess.Pieces;
 using echo17.Signaler.Core;
+using UI.Summary;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -21,6 +22,13 @@ namespace AIPlayer
         {
             Signaler.Instance.Subscribe<GameOver>(this, OnGameOver);
             Signaler.Instance.Subscribe<StartEnemyTurn>(this, OnEnemyTurnStarted);
+            Signaler.Instance.Subscribe<RestartSession>(this,OnRestartSession);
+        }
+
+        private bool OnRestartSession(RestartSession signal)
+        {
+            _isGameOver = false;
+            return true;
         }
 
         private bool OnGameOver(GameOver signal)
@@ -29,10 +37,6 @@ namespace AIPlayer
             return true;
         }
 
-        public void Initialize()
-        {
-            _isGameOver = false;
-        }
         
         private bool OnEnemyTurnStarted(StartEnemyTurn signal)
         {
