@@ -6,7 +6,10 @@ using Chess.Pieces;
 using Data;
 using echo17.Signaler.Core;
 using Lean.Pool;
+using UI;
+using UI.GameState;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 {
@@ -48,26 +51,36 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
             Destroy(Instance);
         Instance = this;
 
+        Signaler.Instance.Subscribe<InitializeGameSession>(this, OnInitializeGameSession);
         Signaler.Instance.Subscribe<FinishEnemyTurn>(this, OnEnemyTurnFinished);
     }
 
-    private bool OnEnemyTurnFinished(FinishEnemyTurn signal)
+    private bool OnInitializeGameSession(InitializeGameSession signal)
     {
-        NextPlayer();
-        return true;
-    }
+        boardController.Clear();
+        if (_tileSelectionController == null)
+            _tileSelectionController = boardController.GetComponent<TileSelectionController>();
+        if (_moveActionController == null)
+            _moveActionController = boardController.GetComponent<MoveActionController>();
 
-    private void Start ()
-    {
         _white = new Player("white", true);
         _black = new Player("black", false);
-        _tileSelectionController = boardController.GetComponent<TileSelectionController>();
-        _moveActionController = boardController.GetComponent<MoveActionController>();
         CurrentPlayer = _white;
         _otherPlayer = _black;
 
         InitializeGame();
+
+        Signaler.Instance.Broadcast(this, new StartPlayerTurn());
+
+        return true;
+        
     }
+
+    private bool OnEnemyTurnFinished(FinishEnemyTurn signal)
+    {
+        return true;
+    }
+
 
     private void InitializeGame()
     {
@@ -145,6 +158,7 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
 
     public void AIMove(Piece piece, Vector2Int targetGridPoint)
     {
+        Debug.LogError("AI Move : "+piece.transform.name + " :to: "+targetGridPoint);
         if (piece is Pawn && !HasPawnMoved(piece.gameObject)) 
             _movedPawns.Add(piece.gameObject);
 
@@ -218,10 +232,11 @@ public class GameManager : MonoBehaviour, IBroadcaster, ISubscriber
         var tempPlayer = CurrentPlayer;
         CurrentPlayer = _otherPlayer;
         _otherPlayer = tempPlayer;
-        
-        if (CurrentPlayer.Name == "black") 
-            Signaler.Instance.Broadcast(this, new StartEnemyTurn());
 
+        if (CurrentPlayer.Name == "black")
+            Signaler.Instance.Broadcast(this, new StartEnemyTurn());
+        else
+            Signaler.Instance.Broadcast(this, new StartPlayerTurn());
     }
 
     public void CapturePieceAt(Vector2Int gridPoint)

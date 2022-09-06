@@ -1,9 +1,10 @@
+using echo17.Signaler.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace UI
 {
-    public class StartScreenController : MonoBehaviour
+    public class StartScreenController : MonoBehaviour, ISubscriber, IBroadcaster
     {
         [SerializeField] private GameObject startScreenLayout;
         [SerializeField] private Button startGameButton;   
@@ -23,6 +24,7 @@ namespace UI
         private void StartGame()
         {
             startScreenLayout.SetActive(false);
+            Signaler.Instance.Broadcast(this, new InitializeGameSession());
         }
     }
 }
