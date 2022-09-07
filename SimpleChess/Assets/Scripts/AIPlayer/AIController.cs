@@ -21,9 +21,16 @@ namespace AIPlayer
 
         private void Awake()
         {
+            Signaler.Instance.Subscribe<InitializeGameSession>(this, OnInitializeGameSession);
             Signaler.Instance.Subscribe<GameOver>(this, OnGameOver);
             Signaler.Instance.Subscribe<StartEnemyTurn>(this, OnEnemyTurnStarted);
             Signaler.Instance.Subscribe<RestartSession>(this,OnRestartSession);
+        }
+
+        private bool OnInitializeGameSession(InitializeGameSession signal)
+        {
+            _isGameOver = false;
+            return true;
         }
 
         private bool OnRestartSession(RestartSession signal)
